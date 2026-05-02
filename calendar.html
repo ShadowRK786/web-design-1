@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedBook AI - Calendar</title>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#0D9488', // teal-600
+                        'primary-light': '#CCFBF1', // teal-100
+                        accent: '#0F766E', // teal-700
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        /* Optional custom scrollbar for Calendar grid to match the sleek look */
+        .calendar-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+        .calendar-scroll::-webkit-scrollbar-track {
+            background: transparent; 
+        }
+        .calendar-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        .calendar-scroll::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+        
+        /* Modal Transitions */
+        #modal-backdrop {
+            opacity: 0;
+            display: none;
+            transition: opacity 200ms ease-out;
+        }
+        #modal {
+            opacity: 0;
+            transform: scale(0.95);
+            transition: opacity 200ms ease-out, transform 200ms ease-out;
+        }
+    </style>
+</head>
+
+<body class="bg-[#F8FAFC] font-sans text-slate-600 h-screen overflow-hidden flex antialiased">
+
+    <!-- Sidebar (Left) -->
+    <aside class="w-[280px] bg-white flex flex-col h-full border-r border-slate-200 shrink-0 z-20">
+        <!-- Logo Area -->
+        <div class="px-6 py-6 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-[40px] h-[40px] rounded-lg bg-teal-600 flex items-center justify-center text-white shadow-sm">
+                    <i data-lucide="activity" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h2 class="text-[14px] font-semibold text-slate-800 leading-none tracking-tight">MedBook AI</h2>
+                    <p class="text-[11px] font-normal text-slate-400 mt-1">Smart Scheduling</p>
+                </div>
+            </div>
+            <button class="text-slate-400 hover:text-slate-600 transition-colors rounded-md p-1 hover:bg-slate-50 absolute right-4 top-7">
+                <i data-lucide="chevron-left" class="w-6 h-6"></i>
+            </button>
+        </div>
+
+        <!-- Navigation Groups -->
+        <div class="flex-1 overflow-y-auto px-4 py-2 space-y-8">
+            <!-- MAIN Group -->
+            <div>
+                <h3 class="px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-[0.1em] mb-3">Main</h3>
+                <nav class="space-y-1">
+                    <a href="index.html"
+                        class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-[14px] text-slate-600 hover:bg-slate-50 font-medium transition-colors">
+                        <i data-lucide="layout-dashboard" class="w-[18px] h-[18px]"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="calendar.html"
+                        class="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-teal-50 text-teal-700 text-[14px] font-medium relative group transition-colors">
+                        <i data-lucide="calendar" class="w-[18px] h-[18px]"></i>
+                        <span>Calendar</span>
+                        <div class="absolute right-3 w-2 h-2 rounded-full bg-teal-500 shadow-sm ml-auto"></div>
+                    </a>
+                    <a href="#"
+                        class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-[14px] text-slate-600 hover:bg-slate-50 font-medium transition-colors">
+                        <i data-lucide="users" class="w-[18px] h-[18px]"></i>
+                        <span>Patients</span>
+                    </a>
+                    <a href="#"
+                        class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-[14px] text-slate-600 hover:bg-slate-50 font-medium transition-colors">
+                        <i data-lucide="message-square" class="w-[18px] h-[18px]"></i>
+                        <span>Messages</span>
+                    </a>
+                </nav>
+            </div>
+
+            <!-- CONFIG Group -->
+            <div>
+                <h3 class="px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-[0.1em] mb-3">Config</h3>
+                <nav class="space-y-1">
+                    <a href="#"
+                        class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-[14px] text-slate-600 hover:bg-slate-50 font-medium transition-colors">
+                        <i data-lucide="settings" class="w-[18px] h-[18px]"></i>
+                        <span>Settings</span>
+                    </a>
+                    <a href="#"
+                        class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-[14px] text-slate-600 hover:bg-slate-50 font-medium transition-colors">
+                        <i data-lucide="shield" class="w-[18px] h-[18px]"></i>
+                        <span>Security</span>
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Bottom Utility Section -->
+        <div class="p-4 border-t border-slate-100">
+            <!-- AI Badge -->
+            <div class="flex items-start gap-3 p-3 bg-teal-50 rounded-xl mb-3 mx-3">
+                <i data-lucide="sparkles" class="w-5 h-5 text-teal-600 mt-0.5 shrink-0"></i>
+                <div>
+                    <p class="text-[13px] font-bold text-teal-700 leading-tight">AI Powered</p>
+                    <p class="text-[11px] text-teal-600/70 mt-1 leading-snug">Auto-scheduling is active and running.</p>
+                </div>
+            </div>
+            <!-- User / Sign Out -->
+            <a href="#"
+                class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors group">
+                <div class="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center text-[13px] font-semibold shadow-sm shrink-0">N</div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-[13px] font-semibold text-slate-900 truncate">Dr. Demo</p>
+                    <p class="text-[11px] text-slate-500 truncate group-hover:text-red-500 transition-colors">Sign Out</p>
+                </div>
+                <i data-lucide="log-out" class="w-4 h-4 text-slate-400 group-hover:text-red-500 transition-colors shrink-0"></i>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden bg-[#F8FAFC]">
+        <!-- Top Bar -->
+        <header
+            class="flex items-center justify-between px-8 bg-white/60 backdrop-blur-md border-b border-slate-200/60 sticky top-0 z-10 shrink-0" style="height: 60px;">
+            <h1
+                class="text-[20px] font-bold text-slate-800 border-l-4 border-teal-600 pl-3 leading-tight tracking-tight">
+                MedBook AI</h1>
+
+            <div class="flex items-center gap-6">
+                <!-- Search Bar -->
+                <div class="relative w-[280px] hidden md:block group">
+                    <i data-lucide="search"
+                        class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-500 transition-colors"></i>
+                    <input type="text" placeholder="Search patients or appointments..."
+                        class="w-full bg-slate-100 text-[14px] rounded-full pl-9 pr-4 py-2 outline-none focus:ring-2 focus:ring-teal-500/20 focus:bg-white transition-all border border-transparent focus:border-teal-500 placeholder-slate-400">
+                </div>
+
+                <!-- Right Actions -->
+                <div class="flex items-center gap-4">
+                    <button
+                        class="relative text-slate-500 hover:text-slate-700 transition-colors p-1 rounded-full hover:bg-slate-100" style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
+                        <i data-lucide="bell" class="w-[20px] h-[20px]"></i>
+                    </button>
+
+                    <div class="w-px h-6 bg-slate-200"></div>
+
+                    <button class="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
+                        <div
+                            class="w-[36px] h-[36px] rounded-full bg-teal-600 text-white flex items-center justify-center text-[14px] font-semibold shadow-sm">
+                            DU</div>
+                        <div class="text-left hidden lg:block">
+                            <p class="text-[14px] font-bold text-slate-900 leading-tight">Dr. User</p>
+                            <p class="text-[12px] text-slate-400 mt-0.5">user@medbook.ai</p>
+                        </div>
+                        <i data-lucide="chevron-down" class="w-[16px] h-[16px] text-slate-400 ml-1"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Scrollable Calendar Content -->
+        <div class="flex-1 overflow-auto bg-[#F8FAFC] pt-6 px-8 pb-8 flex flex-col">
+            <div class="max-w-[1600px] w-full mx-auto flex-1 flex flex-col">
+                
+                <!-- Page Title Row -->
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-9 h-9 bg-[#CCFBF1] rounded-full flex items-center justify-center">
+                        <i data-lucide="calendar" class="w-5 h-5 text-teal-600"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-[22px] font-semibold text-slate-900 leading-none">Calendar</h1>
+                        <p class="text-[13px] font-normal text-slate-400 mt-1 italic-feel">Drag to reschedule &middot; Click to view details</p>
+                    </div>
+                </div>
+
+                <!-- Status Legend Row -->
+                <div class="flex items-center gap-4 flex-wrap mb-4">
+                    <div class="flex items-center gap-1.5">
+                        <div class="w-2.5 h-2.5 rounded-full bg-[#3B82F6]"></div>
+                        <span class="text-[13px] font-normal text-slate-500">Booked</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <div class="w-2.5 h-2.5 rounded-full bg-[#10B981]"></div>
+                        <span class="text-[13px] font-normal text-slate-500">Confirmed</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <div class="w-2.5 h-2.5 rounded-full bg-[#94A3B8]"></div>
+                        <span class="text-[13px] font-normal text-slate-500">Completed</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <div class="w-2.5 h-2.5 rounded-full bg-[#EF4444]"></div>
+                        <span class="text-[13px] font-normal text-slate-500">Cancelled</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <div class="w-2.5 h-2.5 rounded-full bg-[#F59E0B]"></div>
+                        <span class="text-[13px] font-normal text-slate-500">No Show</span>
+                    </div>
+                </div>
+
+                <!-- Navigation Controls Row -->
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <div class="flex border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm">
+                            <button class="w-9 h-9 flex items-center justify-center hover:bg-slate-50 text-slate-600 transition-colors">
+                                <i data-lucide="chevron-left" class="w-[18px] h-[18px]"></i>
+                            </button>
+                            <button class="w-9 h-9 flex items-center justify-center border-l border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors">
+                                <i data-lucide="chevron-right" class="w-[18px] h-[18px]"></i>
+                            </button>
+                        </div>
+                        <button class="px-4 h-9 bg-[#0F766E] text-white text-[14px] font-medium rounded-lg hover:bg-teal-800 transition-colors shadow-sm">
+                            today
+                        </button>
+                    </div>
+                    <span class="text-[15px] font-semibold text-slate-800">Apr 26 &ndash; May 2, 2026</span>
+                    <div class="flex border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+                        <button id="btn-month" class="px-4 h-9 text-[14px] font-medium bg-white text-slate-600 hover:bg-slate-50 transition-colors">
+                            month
+                        </button>
+                        <button id="btn-week" class="px-4 h-9 text-[14px] font-medium border-l border-slate-200 bg-[#0F766E] text-white transition-colors">
+                            week
+                        </button>
+                        <button id="btn-day" class="px-4 h-9 text-[14px] font-medium border-l border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors">
+                            day
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Week View Container -->
+                <div id="week-view-container" class="border border-slate-200 rounded-xl overflow-hidden bg-white flex flex-col flex-1 shadow-sm min-h-[600px]">
+                    <!-- Header Row -->
+                    <div class="grid grid-cols-[60px_repeat(7,1fr)] bg-[#F8FAFC] border-b border-slate-200 shrink-0">
+                        <div></div> <!-- empty time col -->
+                        <div class="text-center text-[12px] font-medium uppercase text-slate-400 py-3 border-l border-slate-200">SUN 4/26</div>
+                        <div class="text-center text-[12px] font-medium uppercase text-slate-400 py-3 border-l border-slate-200">MON 4/27</div>
+                        <div class="text-center text-[12px] font-medium uppercase text-slate-400 py-3 border-l border-slate-200">TUE 4/28</div>
+                        <div class="text-center text-[12px] font-medium uppercase text-slate-400 py-3 border-l border-slate-200">WED 4/29</div>
+                        <div class="text-center text-[12px] font-medium uppercase text-slate-400 py-3 border-l border-slate-200">THU 4/30</div>
+                        <div class="text-center text-[12px] font-medium uppercase text-slate-400 py-3 border-l border-[#FDE68A] bg-[#FEFCE8]">FRI 5/1</div>
+                        <div class="text-center text-[12px] font-medium uppercase text-slate-400 py-3 border-l border-[#FDE68A]">SAT 5/2</div>
+                    </div>
+
+                    <!-- Body (scrollable) -->
+                    <div class="relative overflow-y-auto flex-1 calendar-scroll" id="calendar-body">
+                        <!-- JS generated rows will go here -->
+                    </div>
+                </div>
+
+                <!-- Month View Container -->
+                <div id="month-view-container" class="hidden border border-slate-200 rounded-xl overflow-hidden bg-white flex-col flex-1 shadow-sm min-h-[600px]">
+                    <!-- Header Row -->
+                    <div class="grid grid-cols-7 bg-[#F8FAFC] border-b border-slate-200 shrink-0">
+                        <div class="text-center text-[12px] font-medium uppercase text-slate-400 py-3">SUN</div>
+                        <div class="text-center text-[12px] font-medium uppercase text-slate-400 py-3 border-l border-slate-200">MON</div>
+                        <div class="text-center text-[12px] font-medium uppercase text-slate-400 py-3 border-l border-slate-200">TUE</div>
+                        <div class="text-center text-[12px] font-medium uppercase text-slate-400 py-3 border-l border-slate-200">WED</div>
+                        <div class="text-center text-[12px] font-medium uppercase text-slate-400 py-3 border-l border-slate-200">THU</div>
+                        <div class="text-center text-[12px] font-medium uppercase text-slate-400 py-3 border-l border-slate-200">FRI</div>
+                        <div class="text-center text-[12px] font-medium uppercase text-slate-400 py-3 border-l border-slate-200">SAT</div>
+                    </div>
+
+                    <!-- Body -->
+                    <div class="flex-1 overflow-y-auto calendar-scroll" id="month-calendar-body">
+                        <!-- JS generated month grid will go here -->
+                    </div>
+                </div>
+
+                <!-- Day View Container -->
+                <div id="day-view-container" class="hidden border border-slate-200 rounded-xl overflow-hidden bg-white flex-col flex-1 shadow-sm min-h-[600px]">
+                    <!-- Header Row -->
+                    <div class="grid shrink-0" style="grid-template-columns: 60px 1fr;">
+                        <div class="bg-[#FEFCE8] border-b border-slate-200"></div>
+                        <div class="bg-[#FEFCE8] border-b border-slate-200 border-l border-[#F1F5F9] text-center text-[12px] font-medium uppercase text-[#94A3B8] py-3 tracking-[0.05em]">
+                            FRIDAY
+                        </div>
+                    </div>
+                    <!-- Body -->
+                    <div class="relative overflow-y-auto flex-1 calendar-scroll" id="day-calendar-body">
+                        <!-- JS generated day grid will go here -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Appointment Details Modal Backdrop -->
+    <div id="modal-backdrop" class="fixed inset-0 z-50 flex items-center justify-center" style="background: rgba(15,23,42,0.55); backdrop-filter: blur(4px);" onclick="handleBackdropClick(event)">
+        <!-- Modal Container -->
+        <div id="modal" class="relative w-[420px] rounded-2xl overflow-hidden bg-white" style="box-shadow: 0 20px 60px rgba(0,0,0,0.3);" onclick="event.stopPropagation()">
+            
+            <!-- Modal Header -->
+            <div class="relative px-6 py-5" style="background: linear-gradient(to right, #0D9488, #0891B2); min-height: 88px;">
+                <h2 class="text-xl font-bold text-white mb-1">Appointment Details</h2>
+                <p class="text-sm text-white/80">Monday, May 4, 2026</p>
+                <button onclick="closeModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center text-white/80 hover:text-white hover:bg-white/15 transition-colors duration-150">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            
+            <!-- Modal Body -->
+            <div class="bg-white px-6 pt-6 pb-6">
+                <!-- Info Grid -->
+                <div class="grid grid-cols-2 gap-x-8 gap-y-5 mb-6">
+                    <!-- PATIENT -->
+                    <div>
+                        <div class="flex items-center gap-1 mb-1">
+                            <i data-lucide="user" class="w-[14px] h-[14px] text-slate-400"></i>
+                            <span class="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">Patient</span>
+                        </div>
+                        <p class="text-[15px] font-semibold text-slate-900">Demo User</p>
+                        <p class="text-[13px] text-slate-500">999999999999</p>
+                    </div>
+                    <!-- SERVICE -->
+                    <div>
+                        <div class="flex items-center gap-1 mb-1">
+                            <i data-lucide="briefcase" class="w-[14px] h-[14px] text-slate-400"></i>
+                            <span class="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">Service</span>
+                        </div>
+                        <p class="text-[15px] font-semibold text-slate-900">@theblockchaincoders</p>
+                        <p class="text-[13px] text-slate-500">45 min</p>
+                    </div>
+                    <!-- TIME -->
+                    <div class="border-t border-slate-100 pt-5">
+                        <div class="flex items-center gap-1 mb-1">
+                            <i data-lucide="clock" class="w-[14px] h-[14px] text-slate-400"></i>
+                            <span class="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">Time</span>
+                        </div>
+                        <p class="text-[15px] font-semibold text-slate-900">4:00 PM &mdash; 4:45 PM</p>
+                    </div>
+                    <!-- STATUS -->
+                    <div class="border-t border-slate-100 pt-5">
+                        <span class="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500 block mb-[6px]">Status</span>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full bg-teal-50 text-teal-600 text-xs font-medium border border-teal-100">
+                            Booked
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="flex items-center gap-2 flex-nowrap">
+                    <button class="h-[38px] px-4 bg-[#0D9488] text-white text-[14px] font-medium rounded-lg hover:bg-[#0F766E] transition-colors duration-150 cursor-pointer border-none">
+                        Confirm
+                    </button>
+                    <button class="h-[38px] px-4 bg-white text-slate-600 text-[14px] font-medium rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors duration-150 cursor-pointer">
+                        Mark Completed
+                    </button>
+                    <button class="h-[38px] px-4 bg-white text-slate-600 text-[14px] font-medium rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors duration-150 cursor-pointer">
+                        No Show
+                    </button>
+                    <button class="h-[38px] px-4 bg-[#EF4444] text-white text-[14px] font-medium rounded-lg hover:bg-[#DC2626] transition-colors duration-150 cursor-pointer border-none">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Initialize Lucide Icons & Render Calendar Grid -->
+    <script>
+        // Init Icons
+        lucide.createIcons();
+
+        // Calendar Grid Logic
+        const calendarBody = document.getElementById('calendar-body');
+        
+        // Settings
+        const startHour = 8; // 8am
+        const endHour = 18;  // 6pm
+        const rowHeight = 48; // px per hour row
+        const todayColIndex = 5; // FRI is the 6th day column (index 5)
+        
+        const days = [
+            { id: 0, isToday: false }, // SUN
+            { id: 1, isToday: false }, // MON
+            { id: 2, isToday: false }, // TUE
+            { id: 3, isToday: false }, // WED
+            { id: 4, isToday: false }, // THU
+            { id: 5, isToday: true },  // FRI (today)
+            { id: 6, isToday: false }  // SAT
+        ];
+
+        let bodyHTML = '';
+        
+        // Generate rows
+        for (let i = startHour; i <= endHour; i++) {
+            const isPM = i >= 12;
+            const displayHour = i > 12 ? i - 12 : (i === 0 ? 12 : i);
+            const ampm = isPM ? 'pm' : 'am';
+            const timeLabel = `${displayHour}${ampm}`;
+            
+            bodyHTML += `<div class="grid grid-cols-[60px_repeat(7,1fr)] h-[48px] border-t border-[#F1F5F9] group">
+                <div class="text-right text-[12px] font-normal text-[#94A3B8] pr-[8px] pt-1 self-start group-hover:bg-slate-50 transition-colors duration-100">${timeLabel}</div>`;
+            
+            days.forEach((d, index) => {
+                let borderClass = 'border-l border-[#E2E8F0]';
+                if (d.isToday) {
+                    borderClass = 'border-l border-[#FDE68A] bg-[#FEFCE8]';
+                } else if (index === todayColIndex + 1) {
+                    borderClass = 'border-l border-[#FDE68A]';
+                }
+
+                // Add subtle hover on the row, except for the time col
+                bodyHTML += `<div class="${borderClass} relative group-hover:bg-slate-50/50 transition-colors duration-100"></div>`;
+            });
+            bodyHTML += `</div>`;
+        }
+
+        // --- Current Time Indicator ---
+        // Let's hardcode the current time to visually demonstrate the design (e.g. 10:45 AM)
+        const currentTimeHour = 10.75; // 10:45 AM
+        const timeOffset = (currentTimeHour - startHour) * rowHeight;
+        
+        bodyHTML += `
+            <div class="absolute left-[60px] right-0 pointer-events-none z-10" style="top: ${timeOffset}px">
+                <div class="grid grid-cols-[repeat(7,1fr)]">
+                    <div style="grid-column: ${todayColIndex + 1}">
+                        <div class="flex items-center -ml-[4px]">
+                            <!-- Red triangle marker -->
+                            <div class="w-0 h-0 border-t-[4px] border-b-[4px] border-l-[4px] border-transparent border-l-[#EF4444]"></div>
+                            <!-- Red line -->
+                            <div class="flex-1 border-t-2 border-[#EF4444]"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // --- Event Pills (Appointment blocks) ---
+        // Absolutely positioned at 3pm row in the FRI column, 3 side-by-side teal pills
+        const eventHour = 15; // 3:00 PM
+        const eventTop = (eventHour - startHour) * rowHeight;
+        
+        bodyHTML += `
+            <div class="absolute left-[60px] right-0 pointer-events-none z-20" style="top: ${eventTop}px; height: 40px">
+                <div class="grid grid-cols-[repeat(7,1fr)] h-full">
+                    <div style="grid-column: ${todayColIndex + 1}" class="h-full px-1 pt-[2px]">
+                        <div class="flex gap-1 h-full w-full pointer-events-auto">
+                            
+                            <div class="flex-1 bg-[#0D9488] text-[#FFFFFF] text-[11px] font-medium rounded-md px-2 py-1 truncate cursor-pointer hover:bg-[#0F766E] transition-colors duration-150 shadow-sm" onclick="openModal()">
+                                3:00 - 4 &middot;
+                            </div>
+                            
+                            <div class="flex-1 bg-[#0D9488] text-[#FFFFFF] text-[11px] font-medium rounded-md px-2 py-1 truncate cursor-pointer hover:bg-[#0F766E] transition-colors duration-150 shadow-sm" onclick="openModal()">
+                                3:00 - 4 &middot;
+                            </div>
+                            
+                            <div class="flex-1 bg-[#0D9488] text-[#FFFFFF] text-[11px] font-medium rounded-md px-2 py-1 truncate cursor-pointer hover:bg-[#0F766E] transition-colors duration-150 shadow-sm" onclick="openModal()">
+                                3:00 - 4 &middot;
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        calendarBody.innerHTML = bodyHTML;
+
+        // --- Month View Logic ---
+        const monthBody = document.getElementById('month-calendar-body');
+        
+        const eventsData = {
+          '2026-05-01': [
+            { time: '3:30p', patient: 'Demo Smith', service: 'General Consultation', status: 'confirmed' },
+            { time: '3:30p', patient: 'Jone Test', service: 'General Consultation', status: 'confirmed' },
+            { time: '3:30p', patient: 'Sample', service: 'General Consultation', status: 'no-show', isNoShow: true }
+          ],
+          '2026-05-04': [
+            { time: '4p', patient: 'Demo User', service: '@theblockchaincoders', status: 'booked' },
+            { time: '4:30p', patient: 'Sample User', service: 'General', status: 'booked' }
+          ],
+          '2026-05-05': [
+            { time: '2:30p', patient: 'Jone Test', service: 'General Consultation', status: 'confirmed' },
+            { time: '3p', patient: 'Demo Smith', service: 'General Consultation', status: 'confirmed' },
+            { time: '4p', patient: 'Jone Test', service: 'General Consultation', status: 'confirmed' }
+          ]
+        };
+
+        function getEventsForDate(d) {
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            const dateStr = `${yyyy}-${mm}-${dd}`;
+            return eventsData[dateStr] || [];
+        }
+
+        const gridStart = new Date(2026, 3, 26); // Apr 26
+        const cells = Array.from({length: 42}, (_, i) => {
+          const d = new Date(gridStart);
+          d.setDate(gridStart.getDate() + i);
+          return {
+            date: d.getDate(),
+            month: d.getMonth(), // 4 = May
+            isCurrentMonth: d.getMonth() === 4,
+            events: getEventsForDate(d)
+          };
+        });
+
+        let monthHTML = '<div class="grid grid-cols-7 h-full">';
+        cells.forEach((cell, i) => {
+            const isLastInRow = (i + 1) % 7 === 0;
+            const bgClass = cell.isCurrentMonth ? 'bg-white hover:bg-slate-50 transition-colors duration-150' : 'bg-[#F8FAFC]';
+            const textClass = cell.isCurrentMonth ? 'text-slate-600' : 'text-slate-300';
+            const rightBorder = isLastInRow ? '' : 'border-r border-[#F1F5F9]';
+            
+            monthHTML += `
+                <div class="min-h-[110px] p-2 border-t border-[#F1F5F9] ${rightBorder} ${bgClass} group/cell cursor-default">
+                    <div class="text-right text-[13px] font-medium mb-1 ${textClass}">
+                        ${cell.date}
+                    </div>
+                    <div class="flex flex-col gap-[2px]">`;
+            
+            cell.events.forEach(e => {
+                const indicator = e.isNoShow ? `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0"></span>` : '';
+                monthHTML += `
+                    <div class="flex items-center gap-1 text-[12px] font-medium rounded-md px-2 py-0.5 truncate cursor-pointer bg-teal-600 text-white hover:bg-teal-700 transition-colors duration-150" onclick="openModal()">
+                        ${indicator}
+                        <span class="truncate">${e.time} ${e.patient} &mdash; ${e.service}</span>
+                    </div>`;
+            });
+            
+            monthHTML += `
+                    </div>
+                </div>`;
+        });
+        monthHTML += '</div>';
+        monthBody.innerHTML = monthHTML;
+
+        // --- Day View Logic ---
+        const dayBody = document.getElementById('day-calendar-body');
+        
+        let dayHTML = '<div class="grid" style="grid-template-columns: 60px 1fr;">';
+        let dayLeftCol = '<div class="flex flex-col w-full">';
+        let dayRightCol = '<div class="relative bg-[#FEFCE8] border-l border-[#F1F5F9] flex flex-col w-full">';
+        
+        for (let i = startHour; i <= endHour; i++) {
+            const isPM = i >= 12;
+            const displayHour = i > 12 ? i - 12 : (i === 0 ? 12 : i);
+            const ampm = isPM ? 'pm' : 'am';
+            const timeLabel = `${displayHour}${ampm}`;
+            
+            dayLeftCol += `<div class="text-right text-[12px] font-normal text-[#94A3B8] pr-[8px] pt-1 h-[48px] border-t border-[#F1F5F9] w-full self-start">${timeLabel}</div>`;
+            dayRightCol += `<div class="h-[48px] border-t border-[#F1F5F9] hover:bg-[#FEF08A]/50 transition-colors duration-100 cursor-pointer"></div>`;
+        }
+        
+        dayLeftCol += '</div>';
+
+        // Current time line (~11:15am)
+        const dayTimeHour = 11.25;
+        const dayTimeOffset = (dayTimeHour - startHour) * rowHeight;
+        dayRightCol += `
+            <div class="absolute left-0 right-0 z-10 flex items-center pointer-events-none" style="top: ${dayTimeOffset}px; margin-left: -4px;">
+                <div style="width:0;height:0;border-top:6px solid transparent;border-bottom:6px solid transparent;border-left:8px solid #EF4444;flex-shrink:0;"></div>
+                <div class="flex-1 border-t-2 border-[#EF4444] -ml-[1px]"></div>
+            </div>
+        `;
+
+        // Event bars (3:30–4:00pm)
+        const dayEventHour = 15.5; // 3:30 PM
+        const dayEventTop = (dayEventHour - startHour) * rowHeight + 4; // 4px visual breathing room
+        dayRightCol += `
+            <div class="absolute left-0 right-0 flex z-20 cursor-pointer shadow-sm" style="top: ${dayEventTop}px; height: 40px;">
+                <div class="flex-1 bg-[#0D9488] text-[#FFFFFF] text-[13px] font-medium px-3 flex items-center hover:bg-[#0F766E] transition-colors duration-150" onclick="openModal()">
+                    <span class="truncate">3:30 - 4:00 - Demo Smith &mdash; General Consultation</span>
+                </div>
+                <div class="flex-1 bg-[#0D9488] text-[#FFFFFF] text-[13px] font-medium px-3 flex items-center border-l border-[#0F766E] hover:bg-[#0F766E] transition-colors duration-150" onclick="openModal()">
+                    <span class="truncate">3:30 - 4:00 - Jone Test &mdash; General Consultation</span>
+                </div>
+                <div class="flex-1 bg-[#0D9488] text-[#FFFFFF] text-[13px] font-medium px-3 flex items-center border-l border-[#0F766E] hover:bg-[#0F766E] transition-colors duration-150" onclick="openModal()">
+                    <span class="truncate">3:30 - 4:00 - Sample &mdash; General Consultation</span>
+                </div>
+            </div>
+        `;
+        
+        dayRightCol += '</div>';
+        dayHTML += dayLeftCol + dayRightCol + '</div>';
+        dayBody.innerHTML = dayHTML;
+
+        // --- View Toggling Logic ---
+        const btnMonth = document.getElementById('btn-month');
+        const btnWeek = document.getElementById('btn-week');
+        const btnDay = document.getElementById('btn-day');
+        
+        const weekViewContainer = document.getElementById('week-view-container');
+        const monthViewContainer = document.getElementById('month-view-container');
+        const dayViewContainer = document.getElementById('day-view-container');
+        
+        function setView(view) {
+            // Remove active styles from all
+            [btnMonth, btnWeek, btnDay].forEach(btn => {
+                btn.className = "px-4 h-9 text-[14px] font-medium bg-white text-slate-600 hover:bg-slate-50 transition-colors" + (btn !== btnMonth ? " border-l border-slate-200" : "");
+            });
+            
+            // Apply active styles to selected
+            const activeClasses = "px-4 h-9 text-[14px] font-medium bg-[#0F766E] text-white transition-colors";
+            
+            if (view === 'month') {
+                btnMonth.className = activeClasses;
+                weekViewContainer.classList.add('hidden');
+                weekViewContainer.classList.remove('flex');
+                dayViewContainer.classList.add('hidden');
+                dayViewContainer.classList.remove('flex');
+                monthViewContainer.classList.remove('hidden');
+                monthViewContainer.classList.add('flex');
+            } else if (view === 'week') {
+                btnWeek.className = activeClasses + " border-l border-slate-200";
+                monthViewContainer.classList.add('hidden');
+                monthViewContainer.classList.remove('flex');
+                dayViewContainer.classList.add('hidden');
+                dayViewContainer.classList.remove('flex');
+                weekViewContainer.classList.remove('hidden');
+                weekViewContainer.classList.add('flex');
+            } else if (view === 'day') {
+                btnDay.className = activeClasses + " border-l border-slate-200";
+                weekViewContainer.classList.add('hidden');
+                weekViewContainer.classList.remove('flex');
+                monthViewContainer.classList.add('hidden');
+                monthViewContainer.classList.remove('flex');
+                dayViewContainer.classList.remove('hidden');
+                dayViewContainer.classList.add('flex');
+            }
+        }
+
+        btnMonth.addEventListener('click', () => setView('month'));
+        btnWeek.addEventListener('click', () => setView('week'));
+        btnDay.addEventListener('click', () => setView('day'));
+
+        // Initialize default view to Week
+        setView('week');
+
+        // --- Modal Display Logic ---
+        function openModal() {
+            const modal = document.getElementById('modal');
+            const backdrop = document.getElementById('modal-backdrop');
+            
+            backdrop.style.display = 'flex';
+            // Force reflow for transition to apply
+            void backdrop.offsetWidth;
+            
+            backdrop.style.opacity = '1';
+            modal.style.opacity = '1';
+            modal.style.transform = 'scale(1)';
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            const backdrop = document.getElementById('modal-backdrop');
+            
+            modal.style.opacity = '0';
+            modal.style.transform = 'scale(0.95)';
+            backdrop.style.opacity = '0';
+            
+            setTimeout(() => { backdrop.style.display = 'none'; }, 200);
+        }
+
+        function handleBackdropClick(e) {
+            if (e.target === e.currentTarget) closeModal();
+        }
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && document.getElementById('modal-backdrop').style.display === 'flex') {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+
+</html>
